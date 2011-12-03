@@ -1,0 +1,7 @@
+#!/usr/bin/env python
+import unittest
+from tests import test_all
+
+if __name__ == '__main__':
+    tests = test_all()
+    results = unittest.TextTestRunner().run(tests)
