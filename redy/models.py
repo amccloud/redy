@@ -1,8 +1,9 @@
 import copy
 
 from .key import Key
-from .utils import DeclarativeDescriptor
+from .manager import Manager
 from .fields import AutoCounterField
+from .utils import DeclarativeDescriptor
 
 class ModelBase(DeclarativeDescriptor):
     def __pre_contribute__(cls, name, bases, attrs):
@@ -34,6 +35,19 @@ class ModelBase(DeclarativeDescriptor):
         if not cls._meta.primary_key and 'id' not in cls._meta.fields:
             cls._add_to_class('id', AutoCounterField(primary_key=True))
 
+        if not hasattr(cls, '_default_manager'):
+            try:
+                cls._meta.fields['objects']
+                raise cls.FieldError, \
+                    u"Model %s must specify a custom Manager, because it " \
+                    u"already has a field named 'objects'" % (
+                        cls.__name__,
+                    )
+            except:
+                pass
+
+            cls._add_to_class('objects', Manager())
+
         return cls
 
     class _MetaOptions(object):
@@ -43,6 +57,7 @@ class ModelBase(DeclarativeDescriptor):
             self.db = None
             self.key = None
             self.fields = {}
+            self.managers = {}
             self.indexes = []
             self.primary_key = None
 
@@ -66,13 +81,17 @@ class Model(object):
         for key, value in kwargs.iteritems():
             if key not in self._meta.fields:
                 raise self.FieldError, \
-                    u"Cannot resolve field '%s' in %s. Choices are %s." % (
+                    u"Cannot resolve field '%s' in model %s. " \
+                    u"Choices are %s." % (
                         key,
                         self.__class__.__name__,
                         ', '.join(self._meta.fields.keys()),
                     )
 
             setattr(self, key, value)
+
+    class IntegrityError(Exception):
+        pass
 
     class FieldError(Exception):
         pass

@@ -23,7 +23,7 @@ class Field(object):
 
         if self.primary_key:
             if self.model._meta.primary_key:
-                raise self.IntegrityError, \
+                raise self.model.FieldError, \
                     u"Primary key field '%s' already defined." % (
                     self.model._meta.primary_key,
                 )
@@ -55,9 +55,6 @@ class Field(object):
             self.__set__(instance, value)
 
             return value
-
-    class IntegrityError(Exception):
-        pass
 
     class ValidationError(Exception):
         pass

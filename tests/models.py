@@ -30,20 +30,20 @@ class ModelTestCase(unittest.TestCase):
         client.connection_pool.disconnect()
 
     def test_meta(self):
-        self.assertNotEqual(Company._meta, None)
-        self.assertNotEqual(Organization._meta, None)
-        self.assertNotEqual(Person._meta, None)
+        for model in [Company, Organization, Person]:
+            self.assertIsNotNone(model._meta)
 
     def test_db(self):
-        self.assertEqual(Company.db, client)
-        self.assertEqual(Organization.db, client)
-        self.assertEqual(Person.db, client)
+        for model in [Company, Organization, Person]:
+            self.assertEqual(model.db, client)
 
     def test_key(self):
-        self.assertEqual(str(Company._key), 'company')
-        self.assertEqual(str(Organization._key), 'group')
-        self.assertEqual(str(Person._key), 'person')
+        for model in [Company, Person]:
+            self.assertEqual(str(model._key), model.__name__.lower())
 
+        self.assertEqual(str(Organization._key), 'group')
+
+    def test_key_client(self):
         for model_cls in [Company, Organization, Person]:
             self.assertTrue(model_cls._key.has_client())
 
@@ -61,10 +61,10 @@ class ModelTestCase(unittest.TestCase):
         comp2 = Company(
             name='Acme Corporation',
             email='beepbeep@acme.comp',
-            is_active=True,
+            is_active=True
         )
 
-        self.assertEqual(comp2.id, None)
+        self.assertIsNone(comp2.id)
         self.assertEqual(comp2.name, 'Acme Corporation')
 
         comp2.save()
@@ -82,11 +82,11 @@ class ModelTestCase(unittest.TestCase):
     def test_field_defaults(self):
         comp = Company(
             name='Acme Corporation',
-            email='beepbeep@acme.comp',
+            email='beepbeep@acme.comp'
         )
 
         self.assertEqual(comp.is_active, True)
-        self.assertNotEqual(comp.ctime, None)
+        self.assertIsNotNone(comp.ctime)
 
         comp.save()
 
@@ -117,7 +117,19 @@ class ModelTestCase(unittest.TestCase):
         self.assertEqual(Message._meta.primary_key, 'mhash')
         self.assertEqual(Message._meta.fields.keys(), 
             sorted(['mhash']))
-        with self.assertRaises(redy.Field.IntegrityError):
+        with self.assertRaises(Message.FieldError):
             class BadMessage(redy.Model):
                 id = redy.Field(primary_key=True)
                 mhash = redy.Field(primary_key=True)
+
+    def test_default_manager(self):
+        for model in [Company, Organization]:
+            self.assertIsNotNone(model.objects)
+
+    def test_instance_default_manager(self):
+        comp = Company.objects.create(
+            name='Acme Corporation',
+            email='beepbeep@acme.comp'
+        )
+
+        self.assertRaises(Exception, comp, 'objects')

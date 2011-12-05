@@ -20,7 +20,6 @@ class KeyTestCase(unittest.TestCase):
         self.assertFalse(user.has_client())
         self.assertRaises(redy.Key.NoClient, lambda: user[0]['age'].set(21))
 
-
     def test_key_case(self):
         user = redy.Key('USER')
         self.assertEqual(str(user), 'user')
