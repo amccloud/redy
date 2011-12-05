@@ -83,15 +83,10 @@ class Model(object):
 
     @property
     def key(self):
-        return self.get_key()
-
-    def get_key(self, attr=None):
         if not self.pk:
             return self._key
 
-        key = self._key[self.pk]
-
-        return key[attr] if attr else key
+        return self._key[self.pk]
 
     def validate(self):
         pass
@@ -106,3 +101,9 @@ class Model(object):
             field.set_value(self, value)
 
             field.post_save(self)
+
+    def delete(self):
+        pass
+
+    def create(self, **kwargs):
+        pass

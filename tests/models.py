@@ -22,6 +22,13 @@ class Message(redy.Model):
     mhash = redy.Field(primary_key=True)
 
 class ModelTestCase(unittest.TestCase):
+    def setUp(self):
+        client.flushdb()
+
+    def tearDown(Self):
+        client.flushdb()
+        client.connection_pool.disconnect()
+
     def test_meta(self):
         self.assertNotEqual(Company._meta, None)
         self.assertNotEqual(Organization._meta, None)

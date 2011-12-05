@@ -79,10 +79,10 @@ class Field(object):
         return value
 
     def get_value(self, instance):
-        return instance.get_key(self.name).get()
+        return instance.key[self.name].get()
 
     def set_value(self, instance, value):
-        instance.get_key(self.name).set(value)
+        instance.key[self.name].set(value)
 
 class AttributeField(Field):
     def __contribute__(self, cls, name):
@@ -128,7 +128,7 @@ class AutoCounterField(CounterField):
         if value:
             return
 
-        key = instance.get_key(self.name)
+        key = instance.key[self.name]
         setattr(instance, self.name, key.incr(self.amount))
 
 class BooleanField(AttributeField):
