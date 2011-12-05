@@ -120,6 +120,18 @@ class AutoCounterField(CounterField):
         key = instance.get_key(self.name)
         setattr(instance, self.name, key.incr(self.amount))
 
+class BooleanField(AttributeField):
+    pass
+
+class TimeField(AttributeField):
+    pass
+
+class DateTimeField(AttributeField):
+    pass
+
+class BitField(AttributeField):
+    pass
+
 class ListField(Field):
     pass
 

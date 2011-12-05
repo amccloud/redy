@@ -18,7 +18,7 @@ class User(redy.Model):
     email = redy.AttributeField()
     auth = redy.AttributeField()
     apisecret = redy.AttributeField()
-    flags = redy.AttributeField()
+    flags = redy.BitField()
     karma_incr_time = redy.AttributeField()
 
 
