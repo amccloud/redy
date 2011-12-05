@@ -1,11 +1,12 @@
-import unittest, redis, redy
+import unittest, redis, redy, datetime
 
 client = redis.Redis(host='localhost', port=6379, db=9)
 
 class Company(redy.Model):
     name = redy.AttributeField()
     email = redy.AttributeField(indexed=True)
-    is_active = redy.Field(default=True)
+    ctime = redy.DateTimeField(default=datetime.datetime.now)
+    is_active = redy.BooleanField(default=True)
 
     class Meta:
         db = client
@@ -71,10 +72,24 @@ class ModelTestCase(unittest.TestCase):
                 hazardous=True
             )
 
+    def test_field_defaults(self):
+        comp = Company(
+            name='Acme Corporation',
+            email='beepbeep@acme.comp',
+        )
+
+        self.assertEqual(comp.is_active, True)
+        self.assertNotEqual(comp.ctime, None)
+
+        comp.save()
+
+        self.assertEqual(comp.is_active, True)
+        self.assertEqual(type(comp.ctime), datetime.datetime)
+
     def test_fields(self):
         self.assertEqual(
             sorted(Company._meta.fields.keys()),
-            sorted(['id', 'name', 'email', 'is_active']))
+            sorted(['id', 'name', 'email', 'ctime', 'is_active']))
         self.assertEqual(
             sorted(Organization._meta.fields.keys()),
             sorted(Company._meta.fields.keys()))

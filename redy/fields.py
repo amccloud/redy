@@ -1,7 +1,10 @@
+import time, datetime
+
 RECURSIVE_RELATIONSHIP_CONSTANT = 'self'
 
-__all__ = ['Field', 'AttributeField', 'CounterField', 'ListField', \
-            'SetField', 'ReferenceField', 'CounterField']
+__all__ = ['Field', 'AttributeField', 'CounterField', 'AutoCounterField', \
+            'ListField', 'BooleanField', 'TimeField', 'DateTimeField', \
+            'BitField', 'SetField', 'ReferenceField', 'CounterField']
 
 class Field(object):
     def __init__(self, indexed=False, required=False, \
@@ -40,10 +43,14 @@ class Field(object):
         try:
             return getattr(instance, self.instance_attr)
         except AttributeError:
-            value = self.default
 
             if not self.primary_key and instance.pk:
                 value = self.to_python(self.get_value(instance))
+            else:
+                if callable(self.default):
+                    value = self.default()
+                else:
+                    value = self.default
 
             self.__set__(instance, value)
 
@@ -124,10 +131,34 @@ class BooleanField(AttributeField):
     pass
 
 class TimeField(AttributeField):
-    pass
+    def to_redis(self, value):
+        if not value:
+            return super(TimeField, self).to_redis(value)
+
+        if type(value) == datetime.datetime:
+            value = value.time()
+
+        if type(value) == datetime.time:
+            value = time.mktime(value.timetuple())
+
+        return super(TimeField, self).to_redis(value)
+
+    def to_python(self, value):
+        if not value:
+            return super(TimeField, self).to_python(value)
+
+        value = datetime.time.fromtimestamp(float(value))
+
+        return super(TimeField, self).to_python(value)
 
 class DateTimeField(AttributeField):
-    pass
+    def to_redis(self, value):
+        if not value:
+            return super(DateTimeField, self).to_python(value)
+
+        value = time.mktime(value.timetuple())
+
+        return super(DateTimeField, self).to_python(value)
 
 class BitField(AttributeField):
     pass

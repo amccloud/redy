@@ -102,7 +102,7 @@ class Model(object):
         for field in fields:
             field.pre_save(self)
 
-            value = field.to_redis(getattr(self, field.instance_attr))
+            value = field.to_redis(getattr(self, field.name))
             field.set_value(self, value)
 
             field.post_save(self)
