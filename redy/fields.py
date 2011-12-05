@@ -93,11 +93,7 @@ class AutoCounterField(CounterField):
         if value:
             return
 
-        if self.primary_key:
-            key = instance._key[self.name]
-        else:
-            key = instance.get_key(self.name)
-
+        key = instance.get_key(self.name)
         setattr(instance, self.name, key.incr(self.amount))
 
 class ListField(Field):
