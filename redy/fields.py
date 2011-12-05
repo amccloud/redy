@@ -102,9 +102,13 @@ class AttributeField(Field):
 
         instance._attribute_store[self.name] = value
 
-        if (len(instance._attribute_store.keys()) == \
-            len(instance._meta._attribute_fields.keys())):
-            instance.key.hmset(instance._attribute_store)
+        field_len = len(instance._attribute_store.keys())
+        store_len = len(instance._meta._attribute_fields.keys())
+
+        if (store_len == field_len):
+            with instance.key.transient.lock():
+                instance.key.hmset(instance._attribute_store)
+
             instance._attribute_store = {}
 
 class CounterField(AttributeField):
