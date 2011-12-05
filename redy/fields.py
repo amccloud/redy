@@ -4,7 +4,8 @@ __all__ = ['Field', 'AttributeField', 'CounterField', 'ListField', \
             'SetField', 'ReferenceField', 'CounterField']
 
 class Field(object):
-    def __init__(self, indexed=False, required=False, default=None, primary_key=False):
+    def __init__(self, indexed=False, required=False, \
+            default=None, primary_key=False):
         self.name = None
         self.indexed = indexed
         self.required = required
@@ -19,7 +20,8 @@ class Field(object):
 
         if self.primary_key:
             if self.model._meta.primary_key:
-                raise self.IntegrityError, u"Primary key %s already set." % (
+                raise self.IntegrityError, \
+                    u"Primary key field '%s' already defined." % (
                     self.model._meta.primary_key,
                 )
 
