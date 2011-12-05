@@ -4,23 +4,101 @@ __all__ = ['Field', 'AttributeField', 'CounterField', 'ListField', \
             'SetField', 'ReferenceField', 'CounterField']
 
 class Field(object):
-    def __init__(self, indexed=False, required=False, default=None):
+    def __init__(self, indexed=False, required=False, default=None, primary_key=False):
+        self.name = None
         self.indexed = indexed
         self.required = required
         self.default = default
+        self.primary_key = primary_key
 
     def __contribute__(self, cls, name):
-        cls._meta.fields[name] = self
+        self.model = cls
+        self.model._meta.fields[name] = self
+
+        self.name = name
+
+        if self.primary_key:
+            if self.model._meta.primary_key:
+                raise self.IntegrityError, u"Primary key %s already set." % (
+                    self.model._meta.primary_key,
+                )
+
+            self.model._meta.primary_key = name
 
         if self.indexed:
-            if name not in cls._meta.indexes:
-                cls._meta.indexes.append(name)
+            if name not in self.model._meta.indexes:
+                self.model._meta.indexes.append(name)
+
+        setattr(self.model, name, self)
+
+    def __set__(self, instance, value):
+        setattr(instance, self.instance_attr, value)
+
+    def __get__(self, instance, owner):
+        try:
+            return getattr(instance, self.instance_attr)
+        except AttributeError:
+            value = self.default
+
+            if not self.primary_key and instance.pk:
+                value = instance.key.hget(self.name)
+                value = self.to_python(value)
+
+            self.__set__(instance, value)
+
+            return value
+
+    class IntegrityError(Exception):
+        pass
+
+    class ValidationError(Exception):
+        pass
+
+    @property
+    def instance_attr(self):
+        return '_' + self.name
+
+    def get_value(self, instance):
+        return getattr(instance, self.instance_attr, None)
+
+    def pre_save(self, instance):
+        pass
+
+    def post_save(self, instance):
+        pass
+
+    def to_redis(self, value):
+        return value
+
+    def to_python(self, value):
+        return value
 
 class AttributeField(Field):
     pass
 
 class CounterField(AttributeField):
     pass
+
+class AutoCounterField(CounterField):
+    INCR = 1
+    DECR = -1
+
+    def __init__(self, amount=1, direction=INCR, *args, **kwargs):
+        super(AutoCounterField, self).__init__(*args, **kwargs)
+        self.amount = amount * direction
+
+    def pre_save(self, instance):
+        value = super(AutoCounterField, self).get_value(instance)
+
+        if value:
+            return
+
+        if self.primary_key:
+            key = instance._key[self.name]
+        else:
+            key = instance.get_key(self.name)
+
+        setattr(instance, self.name, key.incr(self.amount))
 
 class ListField(Field):
     pass

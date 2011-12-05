@@ -17,6 +17,9 @@ class Organization(Company):
 class Person(Company):
     age = redy.Field(indexed=True, required=False)
 
+class Message(redy.Model):
+    mhash = redy.Field(primary_key=True)
+
 class ModelTestCase(unittest.TestCase):
     def test_meta(self):
         self.assertNotEqual(Company._meta, None)
@@ -29,17 +32,49 @@ class ModelTestCase(unittest.TestCase):
         self.assertEqual(Person.db, client)
 
     def test_key(self):
-        self.assertEqual(str(Company.key), 'company')
-        self.assertEqual(str(Organization.key), 'group')
-        self.assertEqual(str(Person.key), 'person')
+        self.assertEqual(str(Company._key), 'company')
+        self.assertEqual(str(Organization._key), 'group')
+        self.assertEqual(str(Person._key), 'person')
 
         for model_cls in [Company, Organization, Person]:
-            self.assertTrue(model_cls.key.has_client())
+            self.assertTrue(model_cls._key.has_client())
+
+    def test_create_instance(self):
+        comp = Company()
+        comp.name = 'Pixelcloud Inc.'
+        comp.email = 'andrew@pixelcloud.com'
+        comp.is_active = True
+        comp.save()
+
+        self.assertEqual(comp.id, 1)
+        self.assertEqual(comp.pk, 1)
+        self.assertEqual(comp.name, 'Pixelcloud Inc.')
+
+        comp2 = Company(
+            name='Acme Corporation',
+            email='beepbeep@acme.comp',
+            is_active=True,
+        )
+
+        self.assertEqual(comp2.id, None)
+        self.assertEqual(comp2.name, 'Acme Corporation')
+
+        comp2.save()
+
+        self.assertEqual(comp2.id, 2)
+        self.assertEqual(comp2.pk, 2)
+        self.assertEqual(comp2.name, 'Acme Corporation')
+
+        with self.assertRaises(Company.FieldError):
+            Company(
+                name='Umbrella Corporation',
+                hazardous=True
+            )
 
     def test_fields(self):
         self.assertEqual(
             sorted(Company._meta.fields.keys()),
-            sorted(['name', 'email', 'is_active']))
+            sorted(['id', 'name', 'email', 'is_active']))
         self.assertEqual(
             sorted(Organization._meta.fields.keys()),
             sorted(Company._meta.fields.keys()))
@@ -55,3 +90,12 @@ class ModelTestCase(unittest.TestCase):
 
     def test_indexes(self):
         self.assertEqual(Company._meta.indexes, ['email'])
+
+    def test_primary_key(self):
+        self.assertEqual(Message._meta.primary_key, 'mhash')
+        self.assertEqual(Message._meta.fields.keys(), 
+            sorted(['mhash']))
+        with self.assertRaises(redy.Field.IntegrityError):
+            class BadMessage(redy.Model):
+                id = redy.Field(primary_key=True)
+                mhash = redy.Field(primary_key=True)

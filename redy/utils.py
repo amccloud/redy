@@ -4,11 +4,14 @@ class DeclarativeDescriptor(type):
             '__module__': attrs.pop('__module__'),
         })
 
-        if hasattr(cls, '__prepare__'):
-            new_cls = cls.__prepare__(new_cls, name, bases, attrs)
+        if hasattr(cls, '__pre_contribute__'):
+            new_cls = cls.__pre_contribute__(new_cls, name, bases, attrs)
 
         for obj_name, obj in attrs.items():
             new_cls._add_to_class(obj_name, obj)
+
+        if hasattr(cls, '__post_contribute__'):
+            new_cls = cls.__post_contribute__(new_cls, name, bases, attrs)
 
         return new_cls
 
