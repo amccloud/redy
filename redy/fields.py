@@ -152,11 +152,11 @@ class TimeField(AttributeField):
         return super(TimeField, self).to_python(value)
 
 class DateTimeField(AttributeField):
-    def to_redis(self, value):
+    def to_python(self, value):
         if not value:
             return super(DateTimeField, self).to_python(value)
 
-        value = time.mktime(value.timetuple())
+        value = datetime.datetime.fromtimestamp(float(value))
 
         return super(DateTimeField, self).to_python(value)
 
