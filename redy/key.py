@@ -3,8 +3,10 @@ class Key(str):
         pass
 
     def __new__(cls, key, client=None):
+        cls = super(Key, cls).__new__(cls, key.lower())
         cls._client = client
-        return super(Key, cls).__new__(cls, key)
+
+        return cls
 
     def __getattr__(self, key):
         def _client(*args, **kwargs):
