@@ -98,13 +98,11 @@ class Model(object):
 
     def save(self):
         fields = self._meta.fields.values()
-        hash = {}
 
         for field in fields:
             field.pre_save(self)
-            hash[field.name] = field.to_redis(field.get_value(self))
 
-        for field in fields:
+            value = field.to_redis(getattr(self, field.instance_attr))
+            field.set_value(self, value)
+
             field.post_save(self)
-
-        self.key.hmset(hash)

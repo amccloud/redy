@@ -3,8 +3,8 @@ import unittest, redis, redy
 client = redis.Redis(host='localhost', port=6379, db=9)
 
 class Company(redy.Model):
-    name = redy.Field()
-    email = redy.Field(indexed=True)
+    name = redy.AttributeField()
+    email = redy.AttributeField(indexed=True)
     is_active = redy.Field(default=True)
 
     class Meta:
@@ -15,7 +15,7 @@ class Organization(Company):
         key = 'group'
 
 class Person(Company):
-    age = redy.Field(indexed=True, required=False)
+    age = redy.AttributeField(indexed=True, required=False)
 
 class Message(redy.Model):
     mhash = redy.Field(primary_key=True)

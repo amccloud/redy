@@ -43,8 +43,7 @@ class Field(object):
             value = self.default
 
             if not self.primary_key and instance.pk:
-                value = instance.key.hget(self.name)
-                value = self.to_python(value)
+                value = self.to_python(self.get_value(instance))
 
             self.__set__(instance, value)
 
@@ -60,9 +59,6 @@ class Field(object):
     def instance_attr(self):
         return '_' + self.name
 
-    def get_value(self, instance):
-        return getattr(instance, self.instance_attr, None)
-
     def pre_save(self, instance):
         pass
 
@@ -75,8 +71,34 @@ class Field(object):
     def to_python(self, value):
         return value
 
+    def get_value(self, instance):
+        return instance.get_key(self.name).get()
+
+    def set_value(self, instance, value):
+        instance.get_key(self.name).set(value)
+
 class AttributeField(Field):
-    pass
+    def __contribute__(self, cls, name):
+        super(AttributeField, self).__contribute__(cls, name)
+
+        if not hasattr(cls._meta, '_attribute_fields'):
+            cls._meta._attribute_fields = {}
+
+        cls._meta._attribute_fields[name] = self
+
+    def get_value(self, instance):
+        return instance.key.hget(self.name)
+
+    def set_value(self, instance, value):
+        if not hasattr(instance, '_attribute_store'):
+            instance._attribute_store = {}
+
+        instance._attribute_store[self.name] = value
+
+        if (len(instance._attribute_store.keys()) == \
+            len(instance._meta._attribute_fields.keys())):
+            instance.key.hmset(instance._attribute_store)
+            instance._attribute_store = {}
 
 class CounterField(AttributeField):
     pass
@@ -90,7 +112,7 @@ class AutoCounterField(CounterField):
         self.amount = amount * direction
 
     def pre_save(self, instance):
-        value = super(AutoCounterField, self).get_value(instance)
+        value = getattr(instance, self.name)
 
         if value:
             return
